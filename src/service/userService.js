@@ -31,67 +31,47 @@ exports.createUser = async function (userInfo) {
   }
 };
 
-exports.userIdCheck = async function (userId) {
-    const connection = await pool.getConnection(async (conn) => conn);
-    const userIdCheckResult = await User.selectUserId(connection, userId);
-    connection.release();
-  
-    return userIdCheckResult;
-};
-
 // TODO: After 로그인 인증 방법 (JWT)
-exports.postSignIn = async function (userID, userPassword) {
+exports.postSignIn = async function (userId) {
   try {
-    // 아이디 여부 확인
-    const userIDRows = await userProvider.userIDCheck(userID);
-    if (userIDRows.length < 1)
-      return errResponse(baseResponse.SIGNIN_userID_WRONG);
-
-    const selectuserID = userIDRows[0].userID;
-
-    // 비밀번호 확인
-    const selectUserPasswordParams = [selectuserID];
-    const passwordRows = await userProvider.passwordCheck(
-      selectUserPasswordParams
-    );
-
-    if (!bcrypt.compareSync(userPassword, passwordRows[0].userPassword)) {
-      return errResponse(baseResponse.SIGNIN_PASSWORD_WRONG);
-    }
-
-    // 계정 상태 확인
-    const userInfoRows = await userProvider.accountCheck(userID);
-
-    if (userInfoRows[0].status === "INACTIVE") {
-      return errResponse(baseResponse.SIGNIN_INACTIVE_ACCOUNT);
-    } else if (userInfoRows[0].status === "DELETED") {
-      return errResponse(baseResponse.SIGNIN_WITHDRAWAL_ACCOUNT);
-    }
-
-    console.log(userInfoRows[0].userID); // DB의 userId
-
-    //토큰 생성 Service
-    let token = await jwt.sign(
-      {
-        userId: userInfoRows[0].userID,
-      }, // 토큰의 내용(payload)
-      secret_config.jwtsecret, // 비밀키
-      {
-        expiresIn: "365d",
-        subject: "User",
-      } // 유효 기간 365일
-    );
-
+    const redirect_url = "localhost:3000/"
     return response(baseResponse.SUCCESS, {
-      userId: userInfoRows[0].id,
-      jwt: token,
+      userId: userId,
+      url: redirect_url
     });
   } catch (err) {
-    logger.error(
-      `App - postSignIn Service error\n: ${err.message} \n${JSON.stringify(
-        err
-      )}`
-    );
+    // logger.error(
+    //   `App - postSignIn Service error\n: ${err.message} \n${JSON.stringify(
+    //     err
+    //   )}`
+    // );
+    console.log(err);
     return errResponse(baseResponse.DB_ERROR);
   }
 };
+
+exports.userIdCheck = async function (userId) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const userIdCheckResult = await User.selectUserId(connection, userId);
+  connection.release();
+
+  return userIdCheckResult;
+};
+
+exports.passwordCheck = async function (selectUserPasswordParams) {
+  const connection = await pool.getConnection(async (conn) => conn);
+  const passwordCheckResult = await User.selectUserPassword(
+      connection,
+      selectUserPasswordParams
+  );
+  connection.release();
+  return passwordCheckResult[0];
+};
+
+// exports.accountCheck = async function (userId) {
+//   const connection = await pool.getConnection(async (conn) => conn);
+//   const userAccountResult = await userDao.selectUserAccount(connection, userId);
+//   connection.release();
+
+//   return userAccountResult;
+// };

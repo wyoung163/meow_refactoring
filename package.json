@@ -4,6 +4,12 @@
   "main": "main.js",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.1"
-  }
+    "bcrypt": "^5.0.1",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "express-session": "^1.17.3",
+    "mysql2": "^2.3.3"
+  },
+  "repository": "https://github.com/wyoung163/meow_refactoring.git",
+  "author": "wyoung163 <20201014@sungshin.ac.kr>"
 }
